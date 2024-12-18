@@ -1,0 +1,8 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    INTERFACE_NAME:
+      dhcp6: true
+      accept-ra: true
+      ipv6-address-token: "::IPV6TOKEN"

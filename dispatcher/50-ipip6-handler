@@ -1,0 +1,26 @@
+#!/bin/bash
+source /etc/ipip6.conf
+source /usr/local/lib/ipip6-utils.sh
+
+wait_for_ipv6
+CURRENT_LOCAL_V6=$(ip -6 addr show dev "$INTERFACE" | grep 'scope global' | awk '{print $2}' | cut -d/ -f1 | normalize_ipv6)
+
+if [ -f "$LOCAL_V6_FILE" ]; then
+    PREVIOUS_LOCAL_V6=$(cat "$LOCAL_V6_FILE")
+else
+    PREVIOUS_LOCAL_V6=""
+fi
+
+if [ "$CURRENT_LOCAL_V6" != "$PREVIOUS_LOCAL_V6" ]; then
+    log_message INFO "IPv6 prefix change detected. Previous: $PREVIOUS_LOCAL_V6, Current: $CURRENT_LOCAL_V6"
+    echo "$CURRENT_LOCAL_V6" > "$LOCAL_V6_FILE"
+    /usr/local/bin/cleanup-ipip6.sh
+    /usr/local/bin/setup-ipip6.sh
+
+    if [ -n "$ON_PREFIX_CHANGE_CMD" ]; then
+        log_message DEBUG "Executing custom command: $ON_PREFIX_CHANGE_CMD"
+        $ON_PREFIX_CHANGE_CMD
+    fi
+else
+    log_message DEBUG "No IPv6 prefix change detected."
+fi
